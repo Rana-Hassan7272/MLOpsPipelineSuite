@@ -1,0 +1,31 @@
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+
+# MLflow local storage
+mlflow.db
+mlruns/
+
+# Large datasets / generated preprocessing outputs
+datasets/*.csv
+data_pipeline/processed_data/*.csv
+data_pipeline/processed_data/*.npz
+data_pipeline/processed_data/*.npy
+data_pipeline/processed_data/*.pkl
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+.cursor/
+
+# Logs
+*.log
+
+# Local environment
+.env

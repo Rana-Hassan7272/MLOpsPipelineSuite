@@ -1,0 +1,28 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      # API sets its own MLflow tracking URI, but keeping this aligned helps during debugging.
+      - MLFLOW_TRACKING_URI=sqlite:////app/mlflow.db
+    command: uvicorn api.app:app --host 0.0.0.0 --port 8000
+
+  # Optional: MLflow UI container (useful to verify runs/models).
+  mlflow:
+    image: python:3.11-slim
+    volumes:
+      - .:/app
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_TRACKING_URI=sqlite:////app/mlflow.db
+    command: >
+      sh -c "pip install --no-cache-dir mlflow &&
+             mlflow server
+               --backend-store-uri sqlite:////app/mlflow.db
+               --default-artifact-root /app/experiments/mlruns
+               --host 0.0.0.0
+               --port 5000"

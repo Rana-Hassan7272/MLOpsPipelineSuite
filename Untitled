@@ -1,0 +1,17 @@
+# Virtual environment
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+
+# ML / Data
+mlruns/
+experiments/mlruns/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
