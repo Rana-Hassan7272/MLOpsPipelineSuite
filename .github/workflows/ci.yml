@@ -8,6 +8,8 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      MPLBACKEND: Agg
 
     steps:
       - name: Checkout
@@ -74,6 +76,103 @@ jobs:
 
           cfg_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
           print("Updated configs/config.yaml for CI speed.")
+          PY
+
+      - name: Create CI dummy processed datasets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import numpy as np
+          import pandas as pd
+          from scipy.sparse import random as sparse_random
+          from scipy.sparse import save_npz
+          import joblib
+          from sklearn.preprocessing import StandardScaler
+
+          out_dir = Path("data_pipeline") / "processed_data"
+          out_dir.mkdir(parents=True, exist_ok=True)
+
+          rng = np.random.default_rng(42)
+
+          # ---- Spam (Logistic Regression) ----
+          n_train, n_test, n_features = 120, 40, 5000
+          X_train = sparse_random(
+              n_train, n_features, density=0.01,
+              random_state=42, format="csr", dtype=np.float64,
+              data_rvs=lambda k: rng.normal(0, 1, size=k).astype(np.float64)
+          )
+          X_test = sparse_random(
+              n_test, n_features, density=0.01,
+              random_state=43, format="csr", dtype=np.float64,
+              data_rvs=lambda k: rng.normal(0, 1, size=k).astype(np.float64)
+          )
+
+          # Ensure both classes exist for metrics/thresholding
+          y_train = rng.integers(0, 2, size=n_train, endpoint=False, dtype=np.int64)
+          if y_train.sum() == 0:
+              y_train[0] = 1
+          if y_train.sum() == n_train:
+              y_train[0] = 0
+
+          y_test = rng.integers(0, 2, size=n_test, endpoint=False, dtype=np.int64)
+          if y_test.sum() == 0:
+              y_test[0] = 1
+          if y_test.sum() == n_test:
+              y_test[0] = 0
+
+          save_npz(out_dir / "spam_X_train.npz", X_train)
+          save_npz(out_dir / "spam_X_test.npz", X_test)
+          np.save(out_dir / "spam_y_train.npy", y_train)
+          np.save(out_dir / "spam_y_test.npy", y_test)
+
+          # ---- Store customers (K-Means) ----
+          # Match api/test_api.py order: [Age, Income, Spending Score, Gender]
+          n_customers = 200
+          ages = rng.normal(30, 8, size=n_customers).clip(18, 70)
+          incomes = rng.normal(50000, 12000, size=n_customers).clip(10000, 120000)
+          spending = rng.integers(1, 10, size=n_customers).astype(np.float64)
+          gender = rng.integers(0, 2, size=n_customers).astype(np.float64)
+
+          df = pd.DataFrame({
+              "Age": ages,
+              "Annual Income (k$)": incomes,
+              "Spending Score (1-10 0)": spending,
+              "Gender": gender,
+          })
+          df.to_csv(out_dir / "store_customers_processed.csv", index=False)
+
+          # ---- Creditcard (Isolation Forest) ----
+          n_train_cc, n_test_cc = 220, 80
+          n_features_cc = 30
+          # Fraud ~1% in train/test with both classes present
+          fraud_rate = 0.01
+
+          X_train_cc = rng.normal(0, 1, size=(n_train_cc, n_features_cc)).astype(np.float64)
+          X_test_cc = rng.normal(0, 1, size=(n_test_cc, n_features_cc)).astype(np.float64)
+
+          y_train_cc = (rng.random(n_train_cc) < fraud_rate).astype(np.int32)
+          y_test_cc = (rng.random(n_test_cc) < fraud_rate).astype(np.int32)
+          if y_train_cc.sum() == 0:
+              y_train_cc[0] = 1
+          if y_test_cc.sum() == 0:
+              y_test_cc[0] = 1
+
+          # Build dataframes with consistent column count
+          feature_cols = [f"f{i}" for i in range(n_features_cc)]
+          train_df = pd.DataFrame(X_train_cc, columns=feature_cols)
+          test_df = pd.DataFrame(X_test_cc, columns=feature_cols)
+          train_df["Class"] = y_train_cc
+          test_df["Class"] = y_test_cc
+
+          train_df.to_csv(out_dir / "creditcard_train.csv", index=False)
+          test_df.to_csv(out_dir / "creditcard_test.csv", index=False)
+
+          # Optional: save scaler.pkl so API scaling matches training
+          scaler = StandardScaler()
+          scaler.fit(train_df.drop(columns=["Class"]).values)
+          joblib.dump(scaler, out_dir / "scaler.pkl")
+
+          print("CI dummy processed datasets created under data_pipeline/processed_data/")
           PY
 
       - name: Training pipeline
