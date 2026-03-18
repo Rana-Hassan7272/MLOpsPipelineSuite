@@ -152,11 +152,13 @@ if __name__ == "__main__":
     print_cluster_analysis(sklearn_model.labels_, sklearn_model.cluster_centers_,
                           "sklearn", X)
     
+    # Ensure output directory exists even when `auto_k_stats` is None.
+    output_dir = os.path.join(project_root, 'experiments')
+    os.makedirs(output_dir, exist_ok=True)
+    
     # Elbow Curve
     if auto_k_stats is not None:
         print("\n[5] Generating Elbow Curve...")
-        output_dir = os.path.join(project_root, 'experiments')
-        os.makedirs(output_dir, exist_ok=True)
         plot_elbow_curve(auto_k_stats, "Store Customers", output_dir)
     
     # Cluster Visualizations
@@ -192,7 +194,6 @@ if __name__ == "__main__":
     # MLflow Tracking
     print("\n[9] Logging to MLflow...")
     experiment_name = "KMeans_Comparison"
-    output_dir = os.path.join(project_root, 'experiments')
     
     # Track Scratch Implementation
     scratch_hyperparams = {
