@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlops-app-config
+data:
+  MLFLOW_TRACKING_URI: sqlite:////mlflow-data/mlflow.db
+  PROMETHEUS_MULTIPROC_DIR: /tmp
+  RETRAINING_CONFIG_PATH: /app/configs/config.yaml

@@ -9,3 +9,5 @@ uvicorn
 pyyaml
 joblib
 pydantic
+prometheus-client
+prefect

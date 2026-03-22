@@ -83,7 +83,7 @@ def plot_roc_curves(y_test, y_proba_scratch, y_proba_sklearn, output_dir=None, t
         output_dir = os.getcwd()
     output_path = os.path.join(output_dir, 'roc_curve_comparison.png')
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"\n  ✓ ROC Curve saved → {output_path}")
+    print(f"\n  [OK] ROC Curve saved → {output_path}")
     plt.close()
     
     return auc_scratch, auc_sklearn
@@ -119,7 +119,7 @@ def plot_pr_curve(y_true, scratch_scores, sklearn_scores, scratch_ap, sklearn_ap
         output_dir = os.getcwd()
     output_path = os.path.join(output_dir, 'pr_curve_comparison.png')
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"  ✓ PR Curve saved → {output_path}")
+    print(f"  [OK] PR Curve saved → {output_path}")
     plt.close()
 
 
@@ -166,7 +166,7 @@ def plot_score_distributions(y_true, scratch_scores, sklearn_scores,
         output_dir = os.getcwd()
     output_path = os.path.join(output_dir, 'score_distributions.png')
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"  ✓ Score Distributions saved → {output_path}")
+    print(f"  [OK] Score Distributions saved → {output_path}")
     plt.close()
 
 
@@ -291,7 +291,7 @@ def plot_training_curve(loss_history, model_name, output_dir=None):
         output_dir = os.getcwd()
     output_path = os.path.join(output_dir, 'training_curve.png')
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"  ✓ Training Curve saved → {output_path}")
+    print(f"  [OK] Training Curve saved → {output_path}")
     plt.close()
 
 
@@ -478,7 +478,7 @@ def plot_elbow_curve(auto_k_stats, model_name, output_dir=None):
         output_dir = os.getcwd()
     output_path = os.path.join(output_dir, 'elbow_curve.png')
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"  ✓ Elbow Curve saved → {output_path}")
+    print(f"  [OK] Elbow Curve saved → {output_path}")
     plt.close()
 
 
@@ -509,7 +509,7 @@ def plot_cluster_visualization(X_2d, labels, centroids_2d, model_name, save_name
         output_dir = os.getcwd()
     output_path = os.path.join(output_dir, save_name)
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"  ✓ Cluster visualization saved → {save_name}")
+    print(f"  [OK] Cluster visualization saved → {save_name}")
     plt.close()
 
 
@@ -535,7 +535,7 @@ def plot_inertia_history(inertia_history, model_name, output_dir=None):
         output_dir = os.getcwd()
     output_path = os.path.join(output_dir, 'inertia_history.png')
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"  ✓ Inertia history saved → inertia_history.png")
+    print(f"  [OK] Inertia history saved → inertia_history.png")
     plt.close()
 
 

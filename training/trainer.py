@@ -62,7 +62,7 @@ class ModelTrainer:
             self.model.fit(X_train, **kwargs)
         
         self.training_time = time.time() - start_time
-        print(f"  ✓ Training completed in {self.training_time:.4f}s")
+        print(f"  [OK] Training completed in {self.training_time:.4f}s")
         
         # Store training history if available
         if hasattr(self.model, 'loss_history'):

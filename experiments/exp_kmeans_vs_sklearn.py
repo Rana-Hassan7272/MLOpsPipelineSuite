@@ -114,8 +114,8 @@ if __name__ == "__main__":
     scratch_metrics['Algorithm'] = 'K-Means'
     scratch_metrics['Implementation'] = 'Scratch'
     
-    print(f"    ✓ Best inertia: {scratch_model.inertia_:.2f}")
-    print(f"    ✓ Iterations: {scratch_model.n_iter_}")
+    print(f"    [OK] Best inertia: {scratch_model.inertia_:.2f}")
+    print(f"    [OK] Iterations: {scratch_model.n_iter_}")
     
     # Train sklearn implementation
     print(f"\n[4] Training sklearn KMeans...")
@@ -139,8 +139,8 @@ if __name__ == "__main__":
     sklearn_metrics['Algorithm'] = 'K-Means'
     sklearn_metrics['Implementation'] = 'sklearn'
     
-    print(f"    ✓ Best inertia: {sklearn_model.inertia_:.2f}")
-    print(f"    ✓ Iterations: {sklearn_model.n_iter_}")
+    print(f"    [OK] Best inertia: {sklearn_model.inertia_:.2f}")
+    print(f"    [OK] Iterations: {sklearn_model.n_iter_}")
     
     # Print comparison table
     results = [scratch_metrics, sklearn_metrics]
@@ -238,7 +238,7 @@ if __name__ == "__main__":
             tracker.log_plot(os.path.join(output_dir, "inertia_history.png"), "plots")
         if config:
             tracker.log_dict(config, "config")
-        print("    ✓ Scratch implementation logged to MLflow")
+        print("    [OK] Scratch implementation logged to MLflow")
     
     # Track sklearn Implementation
     sklearn_hyperparams = {
@@ -288,7 +288,7 @@ if __name__ == "__main__":
                           "silhouette": str(sklearn_metrics.get('Silhouette', 0))}
                 )
                 if mv:
-                    print(f"    ✓ Model registered: KMeans_sklearn v{mv.version} (Staging)")
+                    print(f"    [OK] Model registered: KMeans_sklearn v{mv.version} (Staging)")
         except Exception as e:
             print(f"    Note: Model logging/registration skipped: {e}")
         
@@ -299,7 +299,7 @@ if __name__ == "__main__":
             tracker.log_plot(os.path.join(output_dir, "sklearn_clusters.png"), "plots")
         if config:
             tracker.log_dict(config, "config")
-        print("    ✓ sklearn implementation logged to MLflow")
+        print("    [OK] sklearn implementation logged to MLflow")
     
     # Final Summary
     print("\n" + "="*90)
@@ -332,13 +332,13 @@ if __name__ == "__main__":
     
     print(f"\n  Scratch Implementation Wins:")
     if scratch_wins:
-        print(f"  {'✓ ' + ', '.join(scratch_wins)}")
+        print(f"  {'[OK] ' + ', '.join(scratch_wins)}")
     else:
         print(f"  None")
     
     print(f"\n  sklearn Wins:")
     if sklearn_wins:
-        print(f"  {'✓ ' + ', '.join(sklearn_wins)}")
+        print(f"  {'[OK] ' + ', '.join(sklearn_wins)}")
     else:
         print(f"  None")
     

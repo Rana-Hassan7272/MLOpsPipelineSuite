@@ -277,10 +277,10 @@ def process_creditcard_dataset(file_path, output_dir='processed_data'):
     train_df.to_csv(train_file, index=False)
     test_df.to_csv(test_file, index=False)
     
-    print(f"\n  ✓ Saved processed data:")
+    print("\n  [OK] Saved processed data:")
     print(f"    Train: {train_file}")
     print(f"    Test:  {test_file}")
-    print(f"  ✓ Preprocessing completed successfully!")
+    print("  [OK] Preprocessing completed successfully!")
 
 if __name__ == "__main__":
     # Process creditcard dataset (new file: creditcard.csv)

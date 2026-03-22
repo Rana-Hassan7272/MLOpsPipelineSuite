@@ -14,4 +14,8 @@ COPY . /app
 
 EXPOSE 8000
 
+RUN mkdir -p /tmp/matplotlib /app/experiments /app/data_pipeline/processed_data \
+    && chmod -R 777 /tmp/matplotlib \
+    && chown -R 1000:1000 /app
+    
 CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]

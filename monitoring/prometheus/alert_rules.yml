@@ -1,0 +1,53 @@
+groups:
+  - name: mlops_api_alerts
+    interval: 10s
+    rules:
+      - alert: MLOpsAPIHighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(mlops_api_request_latency_seconds_bucket[5m])) by (le, endpoint)) > 1.0
+        for: 2m
+        labels:
+          severity: warning
+          service: mlops-api
+        annotations:
+          summary: "High p95 latency on API endpoint"
+          description: "p95 latency > 1.0s for endpoint {{ $labels.endpoint }} in the last 5 minutes."
+
+      - alert: MLOpsAPIErrorRateHigh
+        expr: (sum(rate(mlops_api_requests_total{http_status!~"2.."}[5m])) / clamp_min(sum(rate(mlops_api_requests_total[5m])), 0.0001)) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: mlops-api
+        annotations:
+          summary: "High server error rate"
+          description: "Non-2xx response ratio is above 5% over 5 minutes."
+
+      - alert: MLOpsModelUnavailable
+        expr: mlops_model_loaded < 1
+        for: 1m
+        labels:
+          severity: critical
+          service: mlops-api
+        annotations:
+          summary: "Model not loaded"
+          description: "Model {{ $labels.model }} is not loaded in API."
+
+      - alert: MLOpsDataDriftWarning
+        expr: mlops_data_drift_score >= 2.0
+        for: 1m
+        labels:
+          severity: warning
+          service: mlops-api
+        annotations:
+          summary: "Data drift warning"
+          description: "Drift score for model {{ $labels.model }} is >= 2.0."
+
+      - alert: MLOpsDataDriftCritical
+        expr: mlops_data_drift_score >= 4.0
+        for: 1m
+        labels:
+          severity: critical
+          service: mlops-api
+        annotations:
+          summary: "Data drift critical"
+          description: "Drift score for model {{ $labels.model }} is >= 4.0."
