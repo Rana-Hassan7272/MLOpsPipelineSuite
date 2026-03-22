@@ -36,11 +36,15 @@ class MLflowTracker:
         """
         # Ensure we always use the same backend as `mlflow ui` (sqlite:///mlflow.db in project root)
         if tracking_uri is None:
+            env_tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
+            if env_tracking_uri:
+                tracking_uri = env_tracking_uri
+            else:
             # Get project root: tracking/ is one level down from project root
-            project_root = Path(__file__).resolve().parent.parent
-            db_path = project_root / 'mlflow.db'
-            # Use absolute path with forward slashes for SQLite URI
-            tracking_uri = f"sqlite:///{str(db_path).replace(chr(92), '/')}"
+                project_root = Path(__file__).resolve().parent.parent
+                db_path = project_root / 'mlflow.db'
+                # Use absolute path with forward slashes for SQLite URI
+                tracking_uri = f"sqlite:///{str(db_path).replace(chr(92), '/')}"
         
         mlflow.set_tracking_uri(tracking_uri)
         

@@ -100,3 +100,17 @@ experiment:
   compare_with_sklearn: true
   save_plots: true
   output_dir: experiments/results
+
+# Phase 12: Automatic retraining configuration
+automatic_retraining:
+  monitoring:
+    prometheus_url: http://localhost:9090
+    drift_query: max(mlops_data_drift_score)
+    drift_threshold: 0.0
+  performance:
+    logistic_min_accuracy: 0.999
+  orchestration:
+    default_models: [logistic_regression, kmeans, isolation_forest]
+    redeploy_after_retrain: true
+    redeploy_command: ["docker", "compose", "restart", "api"]
+    run_data_pipeline: true

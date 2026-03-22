@@ -119,7 +119,7 @@ class TrainingPipeline:
         with open(filepath, 'wb') as f:
             pickle.dump(self.model, f)
         
-        print(f"  ✓ Model saved to {filepath}")
+        print(f"  [OK] Model saved to {filepath}")
     
     def load_model(self, filepath: str):
         """
@@ -135,5 +135,5 @@ class TrainingPipeline:
         with open(filepath, 'rb') as f:
             self.model = pickle.load(f)
         
-        print(f"  ✓ Model loaded from {filepath}")
+        print(f"  [OK] Model loaded from {filepath}")
         return self.model

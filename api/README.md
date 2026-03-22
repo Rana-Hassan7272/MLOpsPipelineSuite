@@ -64,6 +64,7 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --workers 4
 - **API**: http://localhost:8000
 - **Interactive Docs (Swagger)**: http://localhost:8000/docs
 - **Alternative Docs (ReDoc)**: http://localhost:8000/redoc
+- **Prometheus Metrics**: http://localhost:8000/metrics
 
 ## Model Loading
 
@@ -109,3 +110,20 @@ print(response.json())
 - If models are not found, endpoints return 503 errors
 - Input features should match the training data format
 - For fraud detection, features are automatically scaled if scaler is available
+
+## Monitoring (Phase 11)
+
+- API exposes Prometheus metrics at `/metrics`
+- Prometheus scrapes API metrics and evaluates alert rules
+- Grafana dashboards show latency, traffic, prediction distribution, drift, and model availability
+- Alertmanager receives alerts from Prometheus
+
+### Monitoring Stack
+
+```bash
+docker compose up --build -d
+```
+
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3000
+- **Alertmanager**: http://localhost:9093

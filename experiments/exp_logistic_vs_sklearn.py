@@ -110,8 +110,8 @@ if __name__ == "__main__":
     scratch_metrics['Algorithm'] = 'Logistic Regression'
     scratch_metrics['Implementation'] = 'Scratch'
     
-    print(f"    ✓ Epochs: {len(scratch_model.loss_history)}")
-    print(f"    ✓ Optimal threshold: {best_threshold:.4f}")
+    print(f"    [OK] Epochs: {len(scratch_model.loss_history)}")
+    print(f"    [OK] Optimal threshold: {best_threshold:.4f}")
     
     # Train sklearn implementation
     print("\n[3] Training sklearn LogisticRegression...")
@@ -233,7 +233,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"    Note: Could not create signature: {e}")
         
-        print("    ✓ Scratch implementation logged to MLflow")
+        print("    [OK] Scratch implementation logged to MLflow")
     
     # Track sklearn Implementation
     sklearn_hyperparams = {
@@ -294,11 +294,11 @@ if __name__ == "__main__":
                           "f1_score": str(sklearn_metrics['F1 Score'])}
                 )
                 if mv:
-                    print(f"    ✓ Model registered: LogisticRegression_sklearn v{mv.version} (Staging)")
+                    print(f"    [OK] Model registered: LogisticRegression_sklearn v{mv.version} (Staging)")
         except Exception as e:
             print(f"    Note: Model logging/registration skipped: {e}")
         
-        print("    ✓ sklearn implementation logged to MLflow")
+        print("    [OK] sklearn implementation logged to MLflow")
     
     # 5. Complexity Analysis
     analyze_complexity(X_train, scratch_trainer.get_training_time(), 
@@ -325,7 +325,7 @@ if __name__ == "__main__":
         wins.append("AUC")
     
     if wins:
-        print(f"  {'✓ ' + ', '.join(wins)}")
+        print(f"  {'[OK] ' + ', '.join(wins)}")
     else:
         print(f"  None")
     
@@ -343,7 +343,7 @@ if __name__ == "__main__":
         sklearn_wins.append("AUC")
     sklearn_wins.append("Training Speed")
     
-    print(f"  {'✓ ' + ', '.join(sklearn_wins)}")
+    print(f"  {'[OK] ' + ', '.join(sklearn_wins)}")
     
     print(f"\n  Overall Assessment:")
     scratch_score = len(wins)

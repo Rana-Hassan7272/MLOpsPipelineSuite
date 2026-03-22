@@ -496,6 +496,7 @@ Automate testing and builds using:
 Pipeline runs:
 
 ```
+for example 
 unit tests
 linting
 training pipeline
@@ -519,6 +520,7 @@ Track:
 prediction distribution
 latency
 data drift
+or anything that best to show to show advance skills in mlops related to it 
 ```
 
 ---
@@ -541,8 +543,62 @@ monitor → retrain → redeploy model
 ```
 
 ---
+pahse 13
+kubernetes
+Namespace-based architecture
+mlops namespace for all app resources
+clear isolation and cleaner ops demo
+Core workloads on Kubernetes
+FastAPI as Deployment + Service
+MLflow as Deployment + Service + persistent volume
+Prometheus, Grafana, Alertmanager (via Helm charts)
+Optional: Prefect worker/scheduler job
+External access pattern
+NGINX Ingress Controller
+Ingress routes for API/Grafana/MLflow
+one cluster entrypoint (very industry-like)
+Configuration management
+ConfigMap for app config
+Secret for sensitive values (Slack/email later)
+no hardcoded credentials in manifests
+Reliability controls
+readiness/liveness/startup probes
+rolling updates strategy
+restart policy + self-healing demo
+Scaling and capacity
+API HorizontalPodAutoscaler (CPU based)
+resources requests/limits on every container
+optional PodDisruptionBudget for API availability
+Storage
+PVC for MLflow DB/artifacts
+PVC for Grafana state
+keep data across pod restarts
+Security baseline
+service accounts + RBAC minimal permissions
+run container as non-root where possible
+image pull policy/version pinning
+Scheduled operations
+Kubernetes CronJob for retraining trigger/check
+optional manual Job for forced retrain
+Release structure
+k8s/base + k8s/overlays/dev using Kustomize
+clean, reusable manifests (huge portfolio point)
+Free + production-looking demo scenarios
+Kill API pod -> Kubernetes auto-recovers
+Apply new API image -> rolling update without downtime
+Generate load -> HPA scales replicas
+Trigger bad version -> rollback to previous ReplicaSet
+Show monitoring + alert firing in Grafana/Alertmanager
+Run retraining CronJob and show logs/results
 
-# 📊 PHASE 13 — Final Report
+
+
+
+
+
+
+
+# 📊 PHASE 14 — Final Report
 
 Create:
 

@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: retraining-cronjob
+spec:
+  schedule: "*/30 * * * *"
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: retraining-sa
+          restartPolicy: OnFailure
+          containers:
+            - name: retraining
+              image: mlops-api:latest
+              imagePullPolicy: IfNotPresent
+              command:
+                - python
+                - retraining/prefect_retraining_flow.py
+                - --skip-redeploy
+              env:
+                - name: MLFLOW_TRACKING_URI
+                  valueFrom:
+                    configMapKeyRef:
+                      name: mlops-app-config
+                      key: MLFLOW_TRACKING_URI
+                - name: PROMETHEUS_URL
+                  value: http://prometheus:9090
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 1Gi
+              volumeMounts:
+                - name: mlflow-data
+                  mountPath: /mlflow-data
+          volumes:
+            - name: mlflow-data
+              persistentVolumeClaim:
+                claimName: mlflow-pvc

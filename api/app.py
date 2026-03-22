@@ -9,17 +9,20 @@ Production-ready API for serving all three ML models:
 
 import os
 import sys
+import time
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi import Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import mlflow
 import mlflow.sklearn
 from sklearn.preprocessing import StandardScaler
 import joblib
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 # Add project root to path
 project_root = Path(__file__).resolve().parent.parent
@@ -28,6 +31,7 @@ sys.path.insert(0, str(project_root))
 # Import custom algorithms
 from algorithms.logistic_regression.logistic_regression import Hassan
 from algorithms.isolation_forest.scratch_isolation_forest import HassanIsolationForest
+from api.monitoring import MonitoringManager, REQUEST_COUNT, REQUEST_LATENCY
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -45,13 +49,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Set MLflow tracking URI
-mlflow_tracking_uri = f"sqlite:///{project_root / 'mlflow.db'}"
+# Set MLflow tracking URI (env override lets Kubernetes point to shared volume path).
+default_mlflow_uri = f"sqlite:///{project_root / 'mlflow.db'}"
+mlflow_tracking_uri = os.getenv("MLFLOW_TRACKING_URI", default_mlflow_uri)
 mlflow.set_tracking_uri(mlflow_tracking_uri)
 
 # Global model storage
 models: Dict[str, Any] = {}
 scalers: Dict[str, Any] = {}
+monitor = MonitoringManager(project_root)
 
 
 # ============================================================================
@@ -264,6 +270,10 @@ async def startup_event():
     print("Loading models from MLflow Model Registry...")
     print("=" * 60)
     load_models()
+    baseline_status = monitor.load_baselines()
+    for model_name in ["logistic_regression", "kmeans", "isolation_forest"]:
+        monitor.set_model_loaded(model_name, model_name in models)
+    print(f"Baseline stats loaded: {baseline_status}")
     print("=" * 60)
     print("API ready to serve predictions!")
     print("=" * 60)
@@ -299,6 +309,25 @@ async def health_check():
     )
 
 
+@app.get("/metrics", tags=["Monitoring"])
+async def metrics():
+    """Prometheus metrics endpoint."""
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    elapsed = time.perf_counter() - start
+    endpoint = request.url.path
+    method = request.method
+    status = str(response.status_code)
+    REQUEST_COUNT.labels(method=method, endpoint=endpoint, http_status=status).inc()
+    REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(elapsed)
+    return response
+
+
 @app.post("/predict/spam", response_model=SpamPredictionResponse, tags=["Predictions"])
 async def predict_spam(request: SpamPredictionRequest):
     """
@@ -325,6 +354,8 @@ async def predict_spam(request: SpamPredictionRequest):
         model = models["logistic_regression"]
         probability = model.predict_proba(features)[0, 1]  # Probability of spam
         prediction = int(probability >= 0.5)
+        monitor.observe_prediction("logistic_regression", prediction, float(probability), "probability")
+        monitor.compute_and_record_drift("logistic_regression", features[0])
         
         return SpamPredictionResponse(
             prediction=prediction,
@@ -356,6 +387,8 @@ async def predict_cluster(request: ClusterPredictionRequest):
         # Get prediction
         model = models["kmeans"]
         cluster = int(model.predict(features)[0])
+        monitor.observe_prediction("kmeans", cluster)
+        monitor.compute_and_record_drift("kmeans", features[0])
         
         # Calculate distance to centroid
         centroid = model.cluster_centers_[cluster]
@@ -405,6 +438,8 @@ async def predict_fraud(request: FraudPredictionRequest):
         # Lower anomaly score = higher fraud probability
         score_min, score_max = -0.5, 0.5  # Typical range
         probability = float(np.clip((anomaly_score - score_min) / (score_max - score_min), 0, 1))
+        monitor.observe_prediction("isolation_forest", is_fraud, probability, "fraud_probability")
+        monitor.compute_and_record_drift("isolation_forest", features[0])
         
         return FraudPredictionResponse(
             is_fraud=is_fraud,
@@ -429,6 +464,9 @@ async def predict_spam_batch(requests: List[SpamPredictionRequest]):
         model = models["logistic_regression"]
         probabilities = model.predict_proba(features)[:, 1]
         predictions = (probabilities >= 0.5).astype(int)
+        for pred, prob, feat in zip(predictions, probabilities, features):
+            monitor.observe_prediction("logistic_regression", int(pred), float(prob), "probability")
+            monitor.compute_and_record_drift("logistic_regression", feat)
         
         return [
             {

@@ -216,7 +216,7 @@ if __name__ == "__main__":
             
             if actual_recall >= 0.75:  # Accept if we get at least 75% recall
                 scratch_model.threshold_ = optimal_thresh
-                print(f"    ✓ Threshold optimized for {actual_recall:.1%} recall: {scratch_model.threshold_:.4f}")
+                print(f"    [OK] Threshold optimized for {actual_recall:.1%} recall: {scratch_model.threshold_:.4f}")
             else:
                 # Try even lower threshold
                 lower_thresh = max(0.10, optimal_thresh * 0.8)
@@ -225,13 +225,13 @@ if __name__ == "__main__":
                 
                 if recall_lower >= 0.75:
                     scratch_model.threshold_ = lower_thresh
-                    print(f"    ✓ Threshold optimized for {recall_lower:.1%} recall: {scratch_model.threshold_:.4f}")
+                    print(f"    [OK] Threshold optimized for {recall_lower:.1%} recall: {scratch_model.threshold_:.4f}")
                 else:
-                    print(f"    ✓ Threshold: {scratch_model.threshold_:.4f}")
+                    print(f"    [OK] Threshold: {scratch_model.threshold_:.4f}")
         else:
-            print(f"    ✓ Threshold: {scratch_model.threshold_:.4f}")
+            print(f"    [OK] Threshold: {scratch_model.threshold_:.4f}")
     else:
-        print(f"    ✓ Threshold: {scratch_model.threshold_:.4f}")
+        print(f"    [OK] Threshold: {scratch_model.threshold_:.4f}")
     
     scratch_scores = scratch_model.score_samples(X_test)
     scratch_preds = (scratch_scores >= scratch_model.threshold_).astype(int)
@@ -257,7 +257,7 @@ if __name__ == "__main__":
     sklearn_preds = (sklearn_model.predict(X_test) == -1).astype(int)
     sklearn_threshold = np.percentile(sklearn_scores, 100 * (1 - contamination))
     
-    print(f"    ✓ Threshold: {sklearn_threshold:.4f}")
+    print(f"    [OK] Threshold: {sklearn_threshold:.4f}")
     
     # Compute metrics
     if y_test is not None:
@@ -438,7 +438,7 @@ if __name__ == "__main__":
                 tracker.log_plot(os.path.join(output_dir, "score_distributions.png"), "plots")
             if config:
                 tracker.log_dict(config, "config")
-            print("    ✓ Scratch implementation logged to MLflow")
+            print("    [OK] Scratch implementation logged to MLflow")
         
         # Track sklearn Implementation
         sklearn_hyperparams = {
@@ -496,7 +496,7 @@ if __name__ == "__main__":
                               "recall": str(sklearn_metrics['Recall'])}
                     )
                     if mv:
-                        print(f"    ✓ Model registered: IsolationForest_sklearn v{mv.version} (Staging)")
+                        print(f"    [OK] Model registered: IsolationForest_sklearn v{mv.version} (Staging)")
             except Exception as e:
                 print(f"    Note: Model logging/registration skipped: {e}")
             
@@ -509,7 +509,7 @@ if __name__ == "__main__":
                 tracker.log_plot(os.path.join(output_dir, "score_distributions.png"), "plots")
             if config:
                 tracker.log_dict(config, "config")
-            print("    ✓ sklearn implementation logged to MLflow")
+            print("    [OK] sklearn implementation logged to MLflow")
         
         # Final Summary
         print("\n" + "="*90)
@@ -542,13 +542,13 @@ if __name__ == "__main__":
         
         print(f"\n  Scratch Implementation Wins:")
         if scratch_wins:
-            print(f"  {'✓ ' + ', '.join(scratch_wins)}")
+            print(f"  {'[OK] ' + ', '.join(scratch_wins)}")
         else:
             print(f"  None")
         
         print(f"\n  sklearn Wins:")
         if sklearn_wins:
-            print(f"  {'✓ ' + ', '.join(sklearn_wins)}")
+            print(f"  {'[OK] ' + ', '.join(sklearn_wins)}")
         else:
             print(f"  None")
         
@@ -567,4 +567,4 @@ if __name__ == "__main__":
         print(f"  Scratch detected {np.sum(scratch_preds)} anomalies")
         print(f"  sklearn detected {np.sum(sklearn_preds)} anomalies")
     
-    print("\n  Done. Isolation Forest comparison completed. ✓")
+    print("\n  Done. Isolation Forest comparison completed. [OK]")

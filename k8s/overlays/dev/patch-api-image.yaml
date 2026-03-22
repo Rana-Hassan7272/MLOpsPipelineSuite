@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlops-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          image: mlops-api:latest
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: retraining-cronjob
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: retraining
+              image: mlops-api:latest
