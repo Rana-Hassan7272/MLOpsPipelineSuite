@@ -822,7 +822,7 @@ if latest_accuracy < config["min_accuracy_threshold"]:
 
 ```
 1. Evaluate trigger conditions (Prometheus query + MLflow API)
-2. Run ETL pipeline (data_pipeline/run_pipeline.py)
+2. Ran ETL pipeline (data_pipeline/run_pipeline.py)
 3. Retrain selected models (scratch + sklearn comparison)
 4. Log new runs to MLflow
 5. Register new model versions → promote to Staging
