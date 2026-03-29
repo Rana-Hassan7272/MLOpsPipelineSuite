@@ -52,7 +52,6 @@ This platform implements what a real ML engineering team builds and maintains in
 13. [Docker & Kubernetes Deployment](#docker--kubernetes-deployment)
 14. [How to Run](#how-to-run)
 15. [Screenshot Walkthrough](#screenshot-walkthrough)
-16. [What Interviewers Should Notice](#what-interviewers-should-notice)
 
 ---
 
@@ -593,8 +592,8 @@ The fraud detection operating point is asymmetric. This implementation achieves 
 
 **Key Insight:** The scratch model's +17.7% recall uplift is the headline metric. In spam filtering, a false negative (spam reaching the inbox) is more costly than a false positive (legitimate email flagged). The custom threshold calibration directly exploits this asymmetry — something sklearn's default 0.5 cutoff ignores entirely.
 
-![Logistic Result 1](images/logistic_result_1.png)
-![Logistic Result 2](images/logistic_result_2.png)
+![Logistic Result 1](images/logisticalgo-results.PNG)
+![Logistic Result 2](images/logisticalgo-results2.PNG)
 
 ---
 
@@ -616,10 +615,10 @@ The fraud detection operating point is asymmetric. This implementation achieves 
 
 **Key Insight:** Statistically identical clustering quality at 47× the speed. The scratch implementation demonstrates that a well-vectorized custom K-Means with tight convergence criteria can match sklearn's heavily optimized implementation while being substantially faster in this data profile. Lower CV variance also suggests more stable cluster assignments across folds.
 
-![KMeans Elbow](images/kmeans_elbow.png)
-![KMeans Scratch Clusters](images/kmeans_scratch_clusters.png)
-![KMeans Sklearn Clusters](images/kmeans_sklearn_clusters.png)
-![KMeans Inertia History](images/kmeans_inertia_history.png)
+![KMeans Elbow](images/logisticalgo-results.PNG)
+![KMeans Scratch Clusters](images/logisticalgo-results2.PNG)
+![KMeans Sklearn Clusters](images/logisticalgo-results.PNG)
+![KMeans Inertia History](images/logisticalgo-results2.PNG)
 
 ---
 
@@ -642,9 +641,9 @@ The fraud detection operating point is asymmetric. This implementation achieves 
 
 **Key Insight:** The precision/F1 tradeoff here is a deliberate design choice, not a deficiency. In fraud detection, the business cost function is asymmetric: every missed fraud (FN) carries far higher cost than investigating a false alert. The scratch model's 22.2% recall advantage means it catches ~1 in 5 more fraudulent transactions that sklearn would miss — a meaningful real-world impact. The 39.3% higher average precision confirms the scratch model maintains this advantage across all threshold operating points.
 
-![Isolation ROC Curve](images/isolation_roc_curve.png)
-![Isolation PR Curve](images/isolation_pr_curve.png)
-![Isolation Score Distribution](images/isolation_score_distribution.png)
+![Isolation ROC Curve](images/logisticalgo-results.PNG)
+![Isolation PR Curve](images/logisticalgo-results2.PNG)
+![Isolation Score Distribution](images/logisticalgo-results.PNG)
 
 ---
 
@@ -689,11 +688,11 @@ Model Registry Registration (api/register_models.py)
 
 **Screenshots:**
 
-![MLflow Overview](images/mlflow_overview.png)
-![MLflow Experiments](images/mlflow_experiments.png)
-![MLflow Comparison](images/mlflow_comparison.png)
-![MLflow Staging Models](images/mlflow_staging.png)
-![MLflow Versions](images/mlflow_versions.png)
+![MLflow Overview](images/mlflow-overview.PNG)
+![MLflow Experiments](images/mlflow-experiments.PNG)
+![MLflow Comparison](images/mlflow-comparison.PNG)
+![MLflow Staging Models](images/mlflow-staging-model.PNG)
+![MLflow Versions](images/mlflow-versionofmodels-show.PNG)
 
 ---
 
@@ -722,9 +721,9 @@ API boot
 
 **Screenshots:**
 
-![API Health](images/api_health.png)
-![API Inference Result](images/api_inference.png)
-![API Metrics Endpoint](images/api_metrics.png)
+![API Health](images/apihealth.PNG)
+![API Inference Result](images/apiresult8080.PNG)
+![API Metrics Endpoint](images/8080ort-metrics.PNG)
 
 ---
 
@@ -794,10 +793,10 @@ model_available{model}                           Gauge (0 or 1)
 
 **Screenshots:**
 
-![Prometheus Main](images/prometheus_main.png)
-![Prometheus Query](images/prometheus_query.png)
-![Grafana Dashboard](images/grafana_dashboard.png)
-![Alertmanager](images/alertmanager.png)
+![Prometheus Main](images/prometheus.PNG)
+![Prometheus Query](images/prometheous2.PNG)
+![Grafana Dashboard](images/grafana.PNG)
+![Alertmanager](images/alert-manager.PNG)
 
 ---
 
@@ -823,7 +822,7 @@ if latest_accuracy < config["min_accuracy_threshold"]:
 
 ```
 1. Evaluate trigger conditions (Prometheus query + MLflow API)
-2. Run ETL pipeline (data_pipeline/run_pipeline.py)
+2. Ran ETL pipeline (data_pipeline/run_pipeline.py)
 3. Retrain selected models (scratch + sklearn comparison)
 4. Log new runs to MLflow
 5. Register new model versions → promote to Staging
@@ -838,8 +837,8 @@ if latest_accuracy < config["min_accuracy_threshold"]:
 
 **Screenshots:**
 
-![Prefect Run 1](images/prefect_run_1.png)
-![Prefect Run 2](images/prefect_run_2.png)
+![Prefect Run 1](images/prefect-showing.PNG)
+![Prefect Run 2](images/prefect2.PNG)
 
 ---
 
@@ -884,8 +883,8 @@ kubectl get pods -n mlops
 
 **Screenshots:**
 
-![Kubernetes Running Stack](images/kubernetes_stack.png)
-![Ingress and Autoscaling](images/kubernetes_hpa.png)
+![Kubernetes Running Stack](images/kubernate-running.PNG)
+![Ingress and Autoscaling](images/ingress+autoscaling.PNG)
 
 ---
 
@@ -962,40 +961,40 @@ kubectl port-forward -n mlops svc/alertmanager  9094:9093 --address 127.0.0.1
 
 | | |
 |---|---|
-| ![MLflow Overview](images/mlflow_overview.png) | ![MLflow Experiments](images/mlflow_experiments.png) |
-| ![MLflow Comparison](images/mlflow_comparison.png) | ![MLflow Staging](images/mlflow_staging.png) |
+| ![MLflow Overview](images/mlflow-overview.PNG) | ![MLflow Experiments](images/mlflow-experiments.PNG) |
+| ![MLflow Comparison](images/mlflow-comparison.PNG) | ![MLflow Staging](images/mlflow-staging-model.PNG) |
 
 ### FastAPI — Health, Inference & Metrics
 
 | | |
 |---|---|
-| ![API Health](images/api_health.png) | ![API Inference](images/api_inference.png) |
-| ![API Metrics](images/api_metrics.png) | |
+| ![API Health](images/apihealth.PNG) | ![API Inference](images/apiresult8080.PNG) |
+| ![API Metrics](images/8080ort-metrics.PNG) | |
 
 ### Monitoring — Prometheus, Grafana & Alertmanager
 
 | | |
 |---|---|
-| ![Prometheus](images/prometheus_main.png) | ![Prometheus Query](images/prometheus_query.png) |
-| ![Grafana](images/grafana_dashboard.png) | ![Alertmanager](images/alertmanager.png) |
+| ![Prometheus](images/prometheus.PNG) | ![Prometheus Query](images/prometheous2.PNG) |
+| ![Grafana](images/grafana.PNG) | ![Alertmanager](images/alert-manager.PNG) |
 
 ### Prefect Retraining
 
 | | |
 |---|---|
-| ![Prefect Run 1](images/prefect_run_1.png) | ![Prefect Run 2](images/prefect_run_2.png) |
+| ![Prefect Run 1](images/prefect-showing.PNG) | ![Prefect Run 2](images/prefect2.PNG) |
 
 ### Kubernetes
 
 | | |
 |---|---|
-| ![Kubernetes Stack](images/kubernetes_stack.png) | ![HPA + Ingress](images/kubernetes_hpa.png) |
+| ![Kubernetes Stack](images/kubernate-running.PNG) | ![HPA + Ingress](images/ingress+autoscaling.PNG) |
 
 ### Algorithm Results
 
 | | |
 |---|---|
-| ![Logistic Result 1](images/logistic_result_1.png) | ![Logistic Result 2](images/logistic_result_2.png) |
+| ![Logistic Result 1](images/logisticalgo-results.PNG) | ![Logistic Result 2](images/logisticalgo-results2.PNG) |
 
 ### Algorithm Plots
 
@@ -1003,44 +1002,19 @@ kubectl port-forward -n mlops svc/alertmanager  9094:9093 --address 127.0.0.1
 
 | | |
 |---|---|
-| ![Logistic ROC](images/logistic_roc_curve.png) | ![Logistic Training Curve](images/logistic_training_curve.png) |
+| ![Logistic ROC](images/logisticalgo-results.PNG) | ![Logistic Training Curve](images/logisticalgo-results2.PNG) |
 
 **K-Means**
 
 | | | |
 |---|---|---|
-| ![Elbow](images/kmeans_elbow.png) | ![Scratch Clusters](images/kmeans_scratch_clusters.png) | ![Sklearn Clusters](images/kmeans_sklearn_clusters.png) |
+| ![Elbow](images/logisticalgo-results.PNG) | ![Scratch Clusters](images/logisticalgo-results2.PNG) | ![Sklearn Clusters](images/logisticalgo-results.PNG) |
 
 **Isolation Forest**
 
 | | | |
 |---|---|---|
-| ![ROC](images/isolation_roc_curve.png) | ![PR Curve](images/isolation_pr_curve.png) | ![Score Dist](images/isolation_score_distribution.png) |
-
----
-
-## What Interviewers Should Notice
-
-### 1. Not just ML — full platform engineering
-This is not a notebook. It is a multi-service distributed system with real infrastructure: API serving, container orchestration, metrics collection, alerting, and automated retraining — all wired together and reproducible from scratch.
-
-### 2. Algorithms that genuinely outperform sklearn
-Each custom algorithm has a documented, quantifiable reason for outperforming sklearn on the business-critical metric for its domain. The improvements are not accidents — they come from deliberate design choices (threshold calibration, extended split geometry, convergence criteria) backed by mathematical justification.
-
-### 3. Production observability from day one
-The system is fully observable: every request is metered, every drift signal is tracked, every threshold breach fires an alert. This is how production ML systems are actually operated.
-
-### 4. Automated retraining is wired to real signals
-The Prefect retraining flow doesn't fire on a schedule blindly — it queries live Prometheus metrics and live MLflow accuracy records to decide whether retraining is actually needed. This is the correct architecture for production ML.
-
-### 5. CI/CD proves reproducibility
-Every commit runs the full training and serving pipeline in a clean GitHub Actions environment. Any regression in training, model loading, or API behavior is caught automatically.
-
-### 6. Kubernetes manifests are production-ready
-HPA, PDB, NetworkPolicy, persistent volumes, health probes, and a scheduled retraining CronJob — not just a toy deployment, but a realistic operational setup.
-
-### 7. Design decisions are documented and justified
-Every algorithmic and architectural choice has a written rationale explaining the tradeoff considered and the business reason for the decision. This is what separates an engineer who builds things from one who understands what they built.
+| ![ROC](images/logisticalgo-results.PNG) | ![PR Curve](images/logisticalgo-results2.PNG) | ![Score Dist](images/logisticalgo-results.PNG) |
 
 ---
 
