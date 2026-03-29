@@ -18,6 +18,7 @@ data_pipeline/processed_data/*.npz
 data_pipeline/processed_data/*.npy
 data_pipeline/processed_data/*.pkl
 
+roadmap.md
 # OS/editor
 .DS_Store
 .idea/
