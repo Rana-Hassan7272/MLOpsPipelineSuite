@@ -36,6 +36,10 @@ jobs:
         run: |
           python -c "from algorithms.logistic_regression.logistic_regression import Hassan; from algorithms.kmean.hassan_kmeans import HassanKMeans; from algorithms.isolation_forest.scratch_isolation_forest import HassanIsolationForest; print('model classes import ok')"
 
+      - name: Pytest suite (contracts + drift + retraining triggers)
+        run: |
+          pytest -v tests/
+
       - name: Reduce training size for CI
         run: |
           python - <<'PY'
@@ -181,6 +185,10 @@ jobs:
           python experiments/exp_kmeans_vs_sklearn.py
           python experiments/exp_isolation_forest_vs_sklearn.py
 
+      - name: Generate benchmark CI report artifact
+        run: |
+          python scripts/generate_benchmark_report.py
+
       - name: API tests
         run: |
           # Start the API server in background
@@ -205,4 +213,12 @@ jobs:
 
           python api/test_api.py
           kill $API_PID
+
+      - name: Upload benchmark report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-ci-report
+          path: |
+            results/benchmark_ci_report.md
+            results/benchmark_ci_report.json
 

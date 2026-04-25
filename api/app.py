@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi import Response, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import mlflow
@@ -125,8 +126,10 @@ class FraudPredictionResponse(BaseModel):
 class HealthResponse(BaseModel):
     """Health check response."""
     status: str
+    ready: bool
     models_loaded: Dict[str, bool]
     mlflow_connected: bool
+    missing_models: List[str]
 
 
 # ============================================================================
@@ -297,16 +300,38 @@ async def root():
 
 @app.get("/health", response_model=HealthResponse, tags=["General"])
 async def health_check():
-    """Health check endpoint."""
-    return HealthResponse(
-        status="healthy",
-        models_loaded={
-            "logistic_regression": "logistic_regression" in models,
-            "kmeans": "kmeans" in models,
-            "isolation_forest": "isolation_forest" in models
-        },
-        mlflow_connected=mlflow.get_tracking_uri() is not None
+    """
+    Readiness endpoint.
+
+    Returns 200 only when all required models are loaded and MLflow is reachable.
+    Returns 503 when serving dependencies are not ready.
+    """
+    required_models = ["logistic_regression", "kmeans", "isolation_forest"]
+    loaded_map = {name: name in models for name in required_models}
+    missing_models = [name for name, loaded in loaded_map.items() if not loaded]
+
+    mlflow_connected = False
+    try:
+        from mlflow.tracking import MlflowClient
+        # Lightweight connectivity check against tracking backend.
+        MlflowClient().search_experiments(max_results=1)
+        mlflow_connected = True
+    except Exception:
+        mlflow_connected = False
+
+    ready = (len(missing_models) == 0) and mlflow_connected
+    payload = HealthResponse(
+        status="healthy" if ready else "unhealthy",
+        ready=ready,
+        models_loaded=loaded_map,
+        mlflow_connected=mlflow_connected,
+        missing_models=missing_models,
     )
+
+    if ready:
+        return payload
+    serialized = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+    return JSONResponse(status_code=503, content=serialized)
 
 
 @app.get("/metrics", tags=["Monitoring"])

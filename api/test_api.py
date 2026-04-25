@@ -8,13 +8,17 @@ import numpy as np
 
 BASE_URL = "http://localhost:8000"
 
+
+def _assert_ok(response, endpoint: str):
+    assert response.status_code == 200, f"{endpoint} failed: {response.status_code} | {response.text}"
+
 def test_health():
     """Test health endpoint."""
     print("Testing /health endpoint...")
     response = requests.get(f"{BASE_URL}/health")
     print(f"Status: {response.status_code}")
     print(f"Response: {response.json()}\n")
-    return response.status_code == 200
+    _assert_ok(response, "/health")
 
 def test_spam_prediction():
     """Test spam detection endpoint."""
@@ -37,7 +41,7 @@ def test_spam_prediction():
         print(f"Model Version: {result.get('model_version', 'N/A')}\n")
     else:
         print(f"Error: {response.text}\n")
-    return response.status_code == 200
+    _assert_ok(response, "/predict/spam")
 
 def test_cluster_prediction():
     """Test customer clustering endpoint."""
@@ -57,7 +61,7 @@ def test_cluster_prediction():
         print(f"Model Version: {result.get('model_version', 'N/A')}\n")
     else:
         print(f"Error: {response.text}\n")
-    return response.status_code == 200
+    _assert_ok(response, "/predict/cluster")
 
 def test_fraud_prediction():
     """Test fraud detection endpoint."""
@@ -78,7 +82,7 @@ def test_fraud_prediction():
         print(f"Model Version: {result.get('model_version', 'N/A')}\n")
     else:
         print(f"Error: {response.text}\n")
-    return response.status_code == 200
+    _assert_ok(response, "/predict/fraud")
 
 def test_batch_spam():
     """Test batch spam prediction."""
@@ -103,7 +107,7 @@ def test_batch_spam():
         print()
     else:
         print(f"Error: {response.text}\n")
-    return response.status_code == 200
+    _assert_ok(response, "/predict/batch/spam")
 
 if __name__ == "__main__":
     print("=" * 60)
