@@ -26,7 +26,7 @@ Most ML projects end at model training. This one starts there.
 
 This platform implements what a real ML engineering team builds and maintains in production:
 
-- **3 custom algorithms** built from mathematical foundations — not just wrapped sklearn — each **outperforming sklearn** on business-critical metrics with rigorous justification
+- **3 custom algorithms** built from mathematical foundations — not just wrapped sklearn — benchmarked against sklearn under explicit evaluation protocol
 - **Full MLflow lifecycle**: experiment tracking → model registry → staged promotion → API serving, all wired together end-to-end
 - **Observable, self-healing API service** with Prometheus metrics, Grafana dashboards, and Alertmanager rules for drift and latency
 - **Automatic retraining pipeline** orchestrated by Prefect, triggered by drift signals from the live Prometheus stack
@@ -44,14 +44,15 @@ This platform implements what a real ML engineering team builds and maintains in
 5. [Phase-by-Phase Implementation](#phase-by-phase-implementation)
 6. [Algorithms Built From Scratch — Deep Dive](#algorithms-built-from-scratch--deep-dive)
 7. [Detailed Experiment Results & Analysis](#detailed-experiment-results--analysis)
-8. [MLflow Tracking & Model Registry](#mlflow-tracking--model-registry)
-9. [FastAPI Model Serving](#fastapi-model-serving)
-10. [CI/CD Pipeline](#cicd-pipeline)
-11. [Monitoring, Drift Detection & Alerting](#monitoring-drift-detection--alerting)
-12. [Automatic Retraining with Prefect](#automatic-retraining-with-prefect)
-13. [Docker & Kubernetes Deployment](#docker--kubernetes-deployment)
-14. [How to Run](#how-to-run)
-15. [Screenshot Walkthrough](#screenshot-walkthrough)
+8. [Benchmark Protocol (Fairness & Reproducibility)](#benchmark-protocol-fairness--reproducibility)
+9. [MLflow Tracking & Model Registry](#mlflow-tracking--model-registry)
+10. [FastAPI Model Serving](#fastapi-model-serving)
+11. [CI/CD Pipeline](#cicd-pipeline)
+12. [Monitoring, Drift Detection & Alerting](#monitoring-drift-detection--alerting)
+13. [Automatic Retraining with Prefect](#automatic-retraining-with-prefect)
+14. [Docker & Kubernetes Deployment](#docker--kubernetes-deployment)
+15. [How to Run](#how-to-run)
+16. [Screenshot Walkthrough](#screenshot-walkthrough)
 
 ---
 
@@ -465,7 +466,7 @@ Quantitative analysis reports in `results/`:
 
 ## Algorithms Built From Scratch — Deep Dive
 
-> These are not sklearn wrappers. Each algorithm was implemented from mathematical foundations with deliberate design choices that **outperform sklearn on business-critical metrics** in this project's domain.
+> These are not sklearn wrappers. Each algorithm was implemented from mathematical foundations and benchmarked against sklearn baselines. Results are presented with operating-point caveats and a reproducible protocol.
 
 ---
 
@@ -497,11 +498,11 @@ Gradient updates:
 Learning rate schedule:  lr_t = lr_0 / (1 + decay * t)
 ```
 
-#### Why It Outperforms sklearn Here
+#### Observed Result and Caveat
 
-The core insight: **sklearn's LogisticRegression optimizes for accuracy and AUC. This implementation optimizes for recall on spam.**
+The core insight: this project prioritizes recall-oriented operating points for spam detection.
 
-Spam detection is an asymmetric cost problem — a missed spam (false negative) costs more than a false alarm (false positive). By scanning the full precision-recall curve after training and selecting the threshold that maximizes F1 with a recall bias, the scratch model captures significantly more spam that sklearn misses at its default 0.5 threshold.
+Spam detection is an asymmetric cost problem — a missed spam (false negative) costs more than a false alarm (false positive). The reported uplift depends on threshold choice, so fair comparison requires threshold tuning for both scratch and sklearn models on the same validation protocol (see benchmark protocol section).
 
 ---
 
@@ -531,9 +532,9 @@ Objective:         minimize J = Σᵢ ||xᵢ - μ_{c(xᵢ)}||²  (within-cluster
 KMeans++ seeding:  P(xᵢ chosen) ∝ min_j ||xᵢ - μⱼ||²
 ```
 
-#### Why It Outperforms sklearn Here
+#### Observed Result and Caveat
 
-**47× faster** (0.17s vs 8.15s) at comparable clustering quality. This comes from implementation details: tighter vectorization in the assignment step, earlier convergence detection via the dual criterion, and avoiding sklearn's internal overhead for edge-case handling irrelevant to this dataset. For production segmentation pipelines where retraining frequency matters, this speed advantage compounds significantly.
+On the current dataset and hardware, this run shows **47x lower training time** (0.17s vs 8.15s) at comparable clustering quality. Treat this as dataset/hardware-specific evidence, not a universal claim.
 
 ---
 
@@ -565,9 +566,9 @@ Extended split: split on  wᵀx ≤ threshold  (random weight vector w)
                 vs. axis-aligned  xⱼ ≤ threshold
 ```
 
-#### Why It Outperforms sklearn Here
+#### Observed Result and Caveat
 
-The fraud detection operating point is asymmetric. This implementation achieves **ROC-AUC 0.9409 vs. sklearn's 0.9364**, and more critically, **recall of 0.8105 vs. 0.6632** — meaning it catches 22% more fraudulent transactions that sklearn misses. The extended split geometry is the primary driver: credit card fraud often manifests in correlated feature directions that axis-aligned trees cannot efficiently isolate. Additionally, this implementation trains in **10.97s vs sklearn's 36.22s** due to tighter tree construction paths.
+The fraud detection operating point is asymmetric. In this run, the implementation achieves **ROC-AUC 0.9409 vs. sklearn's 0.9364** and **recall 0.8105 vs. 0.6632**. As with spam, recall differences are threshold-sensitive; fair interpretation requires matched threshold tuning and uncertainty reporting for both models.
 
 ---
 
@@ -590,7 +591,7 @@ The fraud detection operating point is asymmetric. This implementation achieves 
 | Scratch | **0.9734** | ±0.0029 |
 | sklearn | 0.9533 | ±0.0032 |
 
-**Key Insight:** The scratch model's +17.7% recall uplift is the headline metric. In spam filtering, a false negative (spam reaching the inbox) is more costly than a false positive (legitimate email flagged). The custom threshold calibration directly exploits this asymmetry — something sklearn's default 0.5 cutoff ignores entirely.
+**Key Insight:** Recall uplift is meaningful for spam, but only when both models are evaluated at comparable operating points. Use threshold-tuned results for both models as the main comparison, and keep default-threshold results as a secondary reference.
 
 ![Logistic Result 1](images/logisticalgo-results.PNG)
 ![Logistic Result 2](images/logisticalgo-results2.PNG)
@@ -615,10 +616,7 @@ The fraud detection operating point is asymmetric. This implementation achieves 
 
 **Key Insight:** Statistically identical clustering quality at 47× the speed. The scratch implementation demonstrates that a well-vectorized custom K-Means with tight convergence criteria can match sklearn's heavily optimized implementation while being substantially faster in this data profile. Lower CV variance also suggests more stable cluster assignments across folds.
 
-![KMeans Elbow](images/logisticalgo-results.PNG)
-![KMeans Scratch Clusters](images/logisticalgo-results2.PNG)
-![KMeans Sklearn Clusters](images/logisticalgo-results.PNG)
-![KMeans Inertia History](images/logisticalgo-results2.PNG)
+_Visualization note:_ dedicated K-Means plots are not yet exported separately in this repository. The numeric metrics table above is the primary evidence until model-specific figures are added.
 
 ---
 
@@ -639,11 +637,9 @@ The fraud detection operating point is asymmetric. This implementation achieves 
 | Scratch | **0.9521** | ±0.0163 |
 | sklearn | 0.9475 | ±0.0161 |
 
-**Key Insight:** The precision/F1 tradeoff here is a deliberate design choice, not a deficiency. In fraud detection, the business cost function is asymmetric: every missed fraud (FN) carries far higher cost than investigating a false alert. The scratch model's 22.2% recall advantage means it catches ~1 in 5 more fraudulent transactions that sklearn would miss — a meaningful real-world impact. The 39.3% higher average precision confirms the scratch model maintains this advantage across all threshold operating points.
+**Key Insight:** The precision/F1 tradeoff is deliberate for recall-first fraud detection, but claims should be read as operating-point dependent. Report both threshold-tuned and default-threshold comparisons to avoid overstating general superiority.
 
-![Isolation ROC Curve](images/logisticalgo-results.PNG)
-![Isolation PR Curve](images/logisticalgo-results2.PNG)
-![Isolation Score Distribution](images/logisticalgo-results.PNG)
+_Visualization note:_ dedicated Isolation Forest plots are not yet exported separately in this repository. The numeric metrics table above is the primary evidence until model-specific figures are added.
 
 ---
 
@@ -654,6 +650,43 @@ The fraud detection operating point is asymmetric. This implementation achieves 
 | Logistic Regression | Recall (catch more spam) | **+17.7% recall, +7.0% F1** |
 | K-Means | Training efficiency | **47× faster, equal quality** |
 | Isolation Forest | Recall (catch more fraud) | **+22.2% recall, +39.3% avg precision** |
+
+---
+
+## Benchmark Protocol (Fairness & Reproducibility)
+
+To prevent optimistic or apples-to-oranges comparisons, all scratch vs sklearn benchmarks should follow this strict protocol.
+
+1. **Same data split**
+   - Use identical train/validation/test partitions and identical random seeds for both models.
+   - Keep a fixed holdout test set that is never used for threshold tuning.
+
+2. **Same preprocessing**
+   - Fit preprocessing objects (tokenizer/vectorizer, encoders, scalers, feature selectors) on training data only.
+   - Apply the same transformed features to both scratch and sklearn implementations.
+
+3. **Threshold tuning for both models**
+   - For classification/anomaly tasks, tune decision threshold on validation data for both models under the same objective (for example F1, recall@precision>=X, or cost-weighted utility).
+   - Report two views:
+     - `Default threshold` (reference only)
+     - `Tuned threshold` (primary decision-quality comparison)
+
+4. **Uncertainty and confidence intervals**
+   - Run repeated evaluation (for example repeated stratified CV or multiple seeds).
+   - Report mean +- 95% confidence interval for each key metric:
+     - Classification: accuracy, precision, recall, F1, ROC-AUC, PR-AUC
+     - Clustering: silhouette, Davies-Bouldin, Calinski-Harabasz, inertia
+     - Anomaly detection: ROC-AUC, PR-AUC, recall, precision, F1
+
+5. **Compute fairness**
+   - Compare training/inference times on the same machine, same thread settings, and same input dimensionality.
+   - Include hardware and software metadata with each benchmark run.
+
+6. **Claim discipline**
+   - Prefer wording like "in this dataset/run" instead of universal superiority claims.
+   - Treat differences as provisional unless confidence intervals are clearly separated.
+
+This protocol is used to keep reported wins technically credible and reviewer-trustworthy.
 
 ---
 
@@ -742,13 +775,14 @@ jobs:
       - pip install -r requirements.txt
       - python -m compileall .  (syntax check)
       - smoke import tests for all algorithm classes
+      - pytest -v tests/  (contracts + drift + retraining triggers)
       - rewrite configs/config.yaml (CI-fast epochs)
       - generate synthetic processed datasets (schema-consistent)
       - python experiments/exp_logistic_vs_sklearn.py
       - python experiments/exp_kmeans_vs_sklearn.py
       - python experiments/exp_isolation_forest_vs_sklearn.py
       - uvicorn api/app.py --background
-      - wait for /health readiness
+      - wait for /health readiness (200 only when models + MLflow are ready)
       - python api/test_api.py
 ```
 
@@ -758,6 +792,14 @@ jobs:
 - Local-only file assumptions
 - API startup failures or contract breakages
 - Accidental model format incompatibilities
+
+**Validation snapshot (local):**
+- `pytest -v` passing on full suite (API contracts, model loading, drift logic, retraining trigger behavior)
+- integration endpoint checks passing via `api/test_api.py`
+- CI also generates benchmark artifacts:
+  - `results/benchmark_ci_report.md`
+  - `results/benchmark_ci_report.json`
+  - uploaded in GitHub Actions as artifact `benchmark-ci-report`
 
 ---
 
@@ -924,26 +966,38 @@ python api/register_models.py
 docker compose up -d --build
 ```
 
-### 6. Run API Integration Tests
+### 6. Run Automated Test Suite (pytest)
+
+```bash
+pytest -v tests/
+```
+
+Coverage includes:
+- model loading fallback behavior (registry then experiment run)
+- endpoint contracts and validation behavior
+- drift metric computation and feature-shape mismatch handling
+- retraining trigger behavior (skip, drift-triggered, force mode)
+
+### 7. Run API Integration Tests
 
 ```bash
 python api/test_api.py
 ```
 
-### 7. Run Prefect Retraining Flow
+### 8. Run Prefect Retraining Flow
 
 ```bash
 python retraining/prefect_retraining_flow.py
 ```
 
-### 8. Kubernetes Deployment
+### 9. Kubernetes Deployment
 
 ```bash
 kubectl apply -k k8s/overlays/dev
 kubectl get pods -n mlops
 ```
 
-### 9. Kubernetes Port-Forwards
+### 10. Kubernetes Port-Forwards
 
 ```bash
 kubectl port-forward -n mlops svc/mlops-api     8001:8000 --address 127.0.0.1
@@ -996,25 +1050,11 @@ kubectl port-forward -n mlops svc/alertmanager  9094:9093 --address 127.0.0.1
 |---|---|
 | ![Logistic Result 1](images/logisticalgo-results.PNG) | ![Logistic Result 2](images/logisticalgo-results2.PNG) |
 
-### Algorithm Plots
+### Algorithm Plot Status
 
-**Logistic Regression**
-
-| | |
-|---|---|
-| ![Logistic ROC](images/logisticalgo-results.PNG) | ![Logistic Training Curve](images/logisticalgo-results2.PNG) |
-
-**K-Means**
-
-| | | |
-|---|---|---|
-| ![Elbow](images/logisticalgo-results.PNG) | ![Scratch Clusters](images/logisticalgo-results2.PNG) | ![Sklearn Clusters](images/logisticalgo-results.PNG) |
-
-**Isolation Forest**
-
-| | | |
-|---|---|---|
-| ![ROC](images/logisticalgo-results.PNG) | ![PR Curve](images/logisticalgo-results2.PNG) | ![Score Dist](images/logisticalgo-results.PNG) |
+- Current repository contains two generic algorithm result images used in the logistic section.
+- Dedicated K-Means and Isolation Forest plots are pending export with model-specific filenames.
+- Until then, rely on numeric benchmark tables and experiment reports in `results/` as primary evidence.
 
 ---
 
