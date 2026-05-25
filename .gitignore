@@ -30,3 +30,14 @@ roadmap.md
 
 # Local environment
 .env
+
+# Terraform
+infrastructure/terraform/.terraform/
+infrastructure/terraform/terraform.tfstate
+infrastructure/terraform/terraform.tfstate.backup
+infrastructure/terraform/*.tfplan
+
+# Test/temp outputs
+test_output.txt
+response.json
+experiments.json

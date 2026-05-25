@@ -1,0 +1,26 @@
+FROM public.ecr.aws/lambda/python:3.11
+
+RUN yum update -y && \
+    yum install -y gcc gcc-c++ && \
+    yum clean all
+
+COPY requirements.txt ${LAMBDA_TASK_ROOT}/
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY algorithms/ ${LAMBDA_TASK_ROOT}/algorithms/
+COPY api/ ${LAMBDA_TASK_ROOT}/api/
+COPY configs/ ${LAMBDA_TASK_ROOT}/configs/
+COPY data_pipeline/ ${LAMBDA_TASK_ROOT}/data_pipeline/
+COPY evaluation/ ${LAMBDA_TASK_ROOT}/evaluation/
+COPY experiments/ ${LAMBDA_TASK_ROOT}/experiments/
+COPY monitoring/ ${LAMBDA_TASK_ROOT}/monitoring/
+COPY retraining/ ${LAMBDA_TASK_ROOT}/retraining/
+COPY tracking/ ${LAMBDA_TASK_ROOT}/tracking/
+COPY training/ ${LAMBDA_TASK_ROOT}/training/
+COPY results/ ${LAMBDA_TASK_ROOT}/results/
+
+RUN mkdir -p /tmp/models /tmp/datasets
+
+ENV PYTHONPATH=${LAMBDA_TASK_ROOT}
+
+CMD ["api.lambda_handler.handler"]
