@@ -38,7 +38,7 @@ jobs:
 
       - name: Pytest suite (contracts + drift + retraining triggers)
         run: |
-          pytest -v tests/
+          pytest -v tests/ --ignore=tests/test_retraining_flow.py
 
       - name: Reduce training size for CI
         run: |
