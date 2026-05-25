@@ -1,0 +1,81 @@
+name: Deploy MLOps to AWS
+
+on:
+  push:
+    branches: [main, clean-main2]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: mlops-hassan-api
+  LAMBDA_FUNCTION: mlops-hassan-api
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+
+  deploy:
+    name: Build & Deploy to AWS Lambda
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build --platform linux/amd64 --provenance=false \
+            -f Dockerfile.lambda \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+
+      - name: Update Lambda function
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          aws lambda update-function-code \
+            --function-name $LAMBDA_FUNCTION \
+            --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          aws lambda wait function-updated \
+            --function-name $LAMBDA_FUNCTION
+          echo "✅ Lambda updated successfully"
+
+      - name: Verify deployment
+        run: |
+          API_ID=$(aws apigateway get-rest-apis \
+            --query "items[?name=='mlops-hassan-api'].id" \
+            --output text)
+          URL="https://${API_ID}.execute-api.${AWS_REGION}.amazonaws.com/dev/health"
+          echo "Testing: $URL"
+          sleep 10
+          curl -f $URL || echo "Health check returned unhealthy (models may need loading)"

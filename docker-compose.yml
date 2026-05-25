@@ -1,69 +1,102 @@
 services:
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: mlops-api:optimized
+    container_name: mlops-api
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      # Only mount data directories, not code (immutable container)
+      - ./datasets:/app/datasets:ro
+      - ./experiments/mlruns:/app/experiments/mlruns
+      - mlflow-data:/app/data
     environment:
-      # API sets its own MLflow tracking URI, but keeping this aligned helps during debugging.
-      - MLFLOW_TRACKING_URI=sqlite:////app/mlflow.db
+      - MLFLOW_TRACKING_URI=sqlite:////app/data/mlflow.db
       - PROMETHEUS_MULTIPROC_DIR=/tmp
-    command: uvicorn api.app:app --host 0.0.0.0 --port 8000
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-  # Optional: MLflow UI container (useful to verify runs/models).
   mlflow:
-    image: python:3.11-slim
-    volumes:
-      - .:/app
+    image: ghcr.io/mlflow/mlflow:v2.14.1
+    container_name: mlops-mlflow
     ports:
       - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+      - ./experiments/mlruns:/mlruns
     environment:
-      - MLFLOW_TRACKING_URI=sqlite:////app/mlflow.db
+      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlflow/mlflow.db
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlruns
+      - MLFLOW_HOST=0.0.0.0
+      - MLFLOW_PORT=5000
     command: >
-      sh -c "pip install --no-cache-dir mlflow &&
-             mlflow server
-               --backend-store-uri sqlite:////app/mlflow.db
-               --default-artifact-root /app/experiments/mlruns
-               --host 0.0.0.0
-               --port 5000"
+      mlflow server
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --default-artifact-root /mlruns
+      --host 0.0.0.0
+      --port 5000
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.53.0
+    container_name: mlops-prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
       - "--web.enable-lifecycle"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
     depends_on:
       - api
       - alertmanager
 
   alertmanager:
-    image: prom/alertmanager:latest
+    image: prom/alertmanager:v0.27.0
+    container_name: mlops-alertmanager
     ports:
       - "9093:9093"
     volumes:
       - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
     command:
       - "--config.file=/etc/alertmanager/alertmanager.yml"
       - "--storage.path=/alertmanager"
       - "--web.listen-address=:9093"
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.0.0
+    container_name: mlops-grafana
     ports:
       - "3000:3000"
     volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_ANALYTICS_REPORTING_ENABLED=false
     depends_on:
       - prometheus
+
+volumes:
+  mlflow-data:
+  prometheus-data:
+  alertmanager-data:
+  grafana-data:
