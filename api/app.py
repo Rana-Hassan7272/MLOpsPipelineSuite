@@ -278,10 +278,9 @@ def load_model_from_s3(model_key: str) -> Optional[Any]:
 
     """Load model directly from S3 using joblib (no MLflow registry needed)."""
 
-    import boto3
-    import tempfile
-
     try:
+        import boto3
+        import tempfile
 
         s3_bucket = os.getenv("S3_BUCKET")
 

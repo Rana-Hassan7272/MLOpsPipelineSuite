@@ -27,3 +27,5 @@ prometheus-client==0.20.0
 prefect==2.19.8
 
 griffe==0.38.1
+
+boto3==1.34.144
