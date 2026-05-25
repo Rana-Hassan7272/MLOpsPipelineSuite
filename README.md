@@ -896,6 +896,33 @@ jobs:
       - Wait for Lambda update + health check
 ```
 
+### Live CI/CD Results — Both Workflows Passing ✅
+
+Both workflows run end-to-end on every push to `main` and complete in under 5 minutes total.
+
+**deploy.yml — Full pipeline summary (Run Tests → Build & Deploy to AWS Lambda):**
+
+![GitHub Actions Deploy Summary](public/images/githubaction3.png)
+
+**ci job — All CI steps green (1m 24s):**
+
+![GitHub Actions CI Job](public/images/githubaction2.png)
+
+**deploy job — All CD steps green including ECR push and Lambda update (3m 40s):**
+
+![GitHub Actions Deploy Job](public/images/githubaction1.png)
+
+| Step | Time | What it does |
+|---|---|---|
+| Run Tests (CI) | 1m 2s | Lint, pytest suite, train all 3 models, API integration test |
+| Configure AWS credentials | 1s | Load `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` from GitHub Secrets |
+| Login to Amazon ECR | 1s | Authenticate Docker to private ECR registry |
+| Build, tag, and push Docker image | 2m 25s | Build `Dockerfile.lambda` for `linux/amd64`, push to ECR |
+| Update Lambda function | 25s | `aws lambda update-function-code` with new image URI |
+| Verify deployment | 40s | Poll Lambda until `LastUpdateStatus: Successful` |
+
+**Total end-to-end: 4m 47s from git push to live Lambda updated.**
+
 ---
 
 ## Monitoring, Drift Detection & Alerting
@@ -1216,6 +1243,13 @@ kubectl port-forward -n mlops svc/alertmanager  9094:9093 --address 127.0.0.1
 | | |
 |---|---|
 | ![Kubernetes Stack](images/kubernate-running.PNG) | ![HPA + Ingress](images/ingress+autoscaling.PNG) |
+
+### GitHub Actions CI/CD — Both Workflows Passing
+
+| | |
+|---|---|
+| ![Deploy Pipeline Summary](public/images/githubaction3.png) | ![CI Job Steps](public/images/githubaction2.png) |
+| ![CD Job Steps — ECR + Lambda](public/images/githubaction1.png) | |
 
 ### Algorithm Results
 
