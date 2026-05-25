@@ -25,3 +25,5 @@ pydantic==2.8.2
 prometheus-client==0.20.0
 
 prefect==2.19.8
+
+griffe==0.38.1
